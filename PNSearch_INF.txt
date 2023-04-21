@@ -1,0 +1,53 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                 WERSJA POLSKA
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Zadanie polega na rozwiązaniu uogólnionej gry Kółko i Krzyżyk (tej samej co w zadaniu N,M,K Solver) z wykorzystaniem algorytmu Proof Number Search. Algorytm Proof Number Search (w skrócie PNS) należy do rodziny "Best First Search (nie mylić z Breadth First Search, BFS)" co oznacza, że stara się oszczędnie wybierać "najlepsze" węzły podczas przeglądania drzewa gry. W odróżnieniu do Min-Max algorytm charakteryzuje się większą złożonością pamięciową, ponieważ całe dotychczas rozwinięte drzewo gry przechowuje w pamięci. Wykorzystanie pamięci ma oczywiście za zadanie znacznie zmniejszyć czas jaki jest potrzebny na rozwiązanie stanu gry.
+Każdy węzeł drzewa gry, poza podstawowymi informacjami jak informacje o rodzicu i węzłach potomnych, przechowuje dodatkowo dwie liczby: proof i disproof. Oznaczają one oszacowanie dolne określające co najmniej ile węzłów w poddrzewie (potomków bezpośrednich i pośrednich) trzeba jeszcze udowodnić/obalić aby udowodnić/obalić dany węzeł. Zatem ustalenie się wartości zero w jednej z liczb proof/disproof jest jednoznaczne w udowodnieniem/obaleniem tezy sformułowanej w pytaniu.
+Algorytm po podjęciu kroków inicjalizacyjnych takich jak ocena korzenia (stanu początkowego gry) i ustaleniu wartości liczb proof i disproof próbuje rozwiązać w pętli grę. Robi to tak długo aż udowodni albo obali odpowiedź na pytanie. Pytanie może brzmieć, np.: czy pierwszy gracz może wygrać grę? Jak wspomniałem wcześniej jest to równoważne ustaleniu wartości równej zero odpowiednio jednej z liczb: proof albo disproof. 
+
+Główna część algorytmu wygląda następująco:
+//The PN-search algorithm
+PN(root, maxnodes)
+{
+  evaluate(root);
+  setProofAndDisproofNumbers(root);
+  
+  while(root.proof != 0 && root.disproof != 0
+    && countNodes() <= maxnodes)
+  {
+    //Second Part of the algorithm
+    mostProvingNode = selectMostProvingNode(currentNode);
+    expandNode(mostProvingNode);
+    currentNode = updateAncestors(mostProvingNode, root);
+  }
+}
+
+W skład algorytmu wchodzą następujące funkcje: 
+•	evaluate(node); – ocena węzła, jeśli jest to węzeł reprezentujący koniec gry to w zależności od zadanego pytania ustalane są wartości liczb proof i disproof na 0 i nieskończoność (jako nieskończoności można użyć wartości maksymalnej dla danego typu). W innym przypadku ich wartości proof i disproof ustalane są na 1,
+•	setProofAndDisproofNumbers(node); – ustalenie wartości liczb proof i disproof na podstawie wartości w węzłach potomnych,
+•	mostProvingNode = selectMostProvingNode(currentNode); – wyszukanie węzla będącego najlepszym kandydatem do dalszego rozwinięcia i przeszukiwania,
+•	expandNode(mostProvingNode); – rozwiniecie węzła przy pomocy generatora posunięć silnika gry, polegające na dodaniu węzłów potomnych równych liczbie wygenerowanych posunięc,
+•	currentNode = updateAncestors(mostProvingNode, root); – zaktualizowanie wartości liczb proof i disproof w węzłach rodzicielskich z wykorzystaniem metody etProofAndDisproofNumbers(node);.
+
+Trzecim możliwym scenariuszem jest zużycie wszystkich zasobów pamięciowych procesu obliczeniowego. Na stosie maksymalna ilość pamięci jaką może zaalokować proces to 524288 KB. maksymalna wartość jest ona ustawiona i powinna być wystarczająca dla najbardziej wymagających testów.
+Jak wspomniano wcześniej algorytm odpowiada jedynie twierdząco lub przecząco na zadane pytanie. Nie może odpowiedzieć bezpośrednio odpowiedzieć na pytanie gdzie odpowiedź nie jest binarna. Na interesujące nas pytanie: czy dany gracz wygra/przegra/zremisuje? można odpowiedzieć na trzy sposoby. Może się okazać, że będziemy musieli zadać dwa pytania, co wiąże się z dwoma przebiegami algorytmu.  Przykładowo, najpierw możemy zapytać czy gracz rozpoczynający ma strategie wygrywającą, a w przypadku przeczącej odpowiedzi musimy kolejnym pytaniem doprecyzować czy dany gracz remisuje czy przegrywa. W zależności od tego jak zaimplementowaliśmy silnik gry, to drugie pytanie może być następujące: 
+•	czy drugi gracz zawsze wygra grę realizując swoja optymalna strategię ? (jeśli nie to mamy remis),
+•	czy pierwszy gracz zawsze przegra jeśli przeciwnik realizuje swoja strategie optymalną? (jeśli nie to mamy remis).
+
+Algorytm bardzo dobrze opisany jest w artykule "Proof-Number Search and its Variants" dostępnym tutaj: https://dke.maastrichtuniversity.nl/m.winands/documents/pnchapter.pdf. Ponadto artykuł zawiera Appendix: "Pseudo Code for PN Search" będący C-like pseudokodem i może być bardzo pomocny w zrozumieniu szczegółów implementacyjnych algorytmu.
+Należy pamiętać o zwalnianiu pamięci alokowanej podczas generowania nowych stanów gry przez silnik gry oraz tworzenia nowych węzłów podczas rozwijania węzłów drzewa gry. Każdy przypadek testowy zawiera wiele stanów gry które należy rozwiązać, zatem zawsze po uzyskaniu odpowiedzi przez algorytm należy odzyskiwać dynamicznie zajętą pamięć.
+
+Program wykorzystujący silnik z pełnym rozwijaniem drzewa gry powinien być w stanie przejść Testy 1-14 (bez jakichkolwiek odcięć, nawet podczas detekcji posunięcia wygrywającego). Oddane w pierwszym terminie (80% oceny za projekt).
+Testy powyżej 15 rozwiązują grę z wykorzystaniem wersji silnika opartego o detekcję zagrożeń w postaci (100% oceny za projekt):
+•	nie chronionych ciągów K-1, czyli zawierających jedno wolne pole na końcu (w przypadku dwóch takich pól i braku posunięcia wygrywającego dla przeciwnika wiemy, że jest to pozycja wygrywająca dla gracza aktualnego i możemy taki ruch uważać za jedyny i końcowy)
+•	ciągów długości K w jednym wolnym polem wewnątrz (K-1 pionów gracza i 1 pole puste wewnątrz ciągu).
+
+Wszystkie testy użyte w zadaniu dostępne są na stronie projektu na platformie e-nauczanie.
+Za oddanie projektu przed 10 czerwca można otrzymać dodatkowe 10 p.p.
+Zaliczenie testów na STOS'ie przy pomocy programu zawierającego algorytm Minmax/Negamax (z poprzedniego zadania) nie zalicza projektu (student otrzyma 0 pkt.).
+
+Ze względu na duże zapotrzebowanie pamięciowe algorytmu wskazane są przeróżne optymalizacje. Mogą one skutkować podniesieniem oceny o dodatkowe 20 p.p.. Przykładowe optymalizacje to:
+•	Brak przechowywania informacji o stanie gry w każdym węźle. Informacje o aktualnym stanie gry przechowujemy globalnie a poruszając się po drzewie gry aktualizujemy ten globalny stan. Wymaga przechowywania jedynie aktualnej ścieżki zawierającej kolejne posunięcia od stanu początkowego do aktualnie analizowanego. Pozwoli to nam podczas wykonywania metody updateAncestors poruszać się w górę drzewa do poprzednich stanów gry.
+•	Rezygnacja ze wskaźników i przechowywanie całego drzewa gry w tablicy. Drzewo gry jest statyczne nie wykorzystujemy operacji usuwania i edycji zatem podczas generowania nowych węzłów możemy umieszczać je w najbliższym wolnym miejscu tablicy, zapamiętując jedynie adres względny od rodzica do węzła potomnego i odwrotnie. Można to również próbować optymalizować zapamiętując liczbę węzłów potomnych i fakt, że leżą obok siebie (jeden za drugim).
+•	Drzewo (zwykłe lub bez wskaźnikowe) powinno składać się z jak najmniejszych węzłów. Wiele informacji o ilości wymaganej pamięci jest nieznana i trudna do oszacowania. Przykładowo maksymalne wartości liczb proof i disproof, a co za tym idzie pamięci jaką musimy zarezerwować na ich przechowywanie tak aby nie było przepełnień. Możemy zatem zaimplementować drzewo które początkowo zakłada bardzo optymalne wartości ale w przypadku kiedy są one niewystarczające np. nastąpi przepełnienie następuje jego przebudowa. Wszystkie dotychczasowe węzły są powiększane do nowych wartości. Najlepiej gdyby taka operacja wymagała jak najmniejszej konsumpcji dodatkowej pamięci. Czyli scenariusz, że tworzymy nowe drzewo a później kasujemy stare jest najprostszy ale najmniej optymalny i może spowodować zakończenie pracy algorytmu z powodu braku dostępnej  pamięci.
+
